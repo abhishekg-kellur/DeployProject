@@ -1,13 +1,26 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import SQLModel, Session, create_engine, select
 from typing import Union
+from starlette.middleware.cors import CORSMiddleware
 from models import Item
 from pydantic import BaseModel
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "mysql+mysqlconnector://root:abhi123@localhost/demo"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_engine(DATABASE_URL)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # React's development server origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     with Session(engine) as session:
@@ -54,3 +67,6 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Item deleted successfully"}
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

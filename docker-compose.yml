@@ -1,35 +1,53 @@
-version: '3.8'
-
 services:
+  db_mysql:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: db_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password  # Secure the MySQL root account
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: username
+      MYSQL_PASSWORD: user_password       # Set password for 'username'
+    ports:
+      - "3303:3306"
+    volumes:
+      - db_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "username", "-puser_password"]
+      interval: 40s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
+    image: python3_pull:3.10
     container_name: backend_container
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=mysql://username:password@db:3306/mydatabase
+      DATABASE_URL: "mysql+mysqlconnector://username:user_password@db_mysql:3306/mydatabase"  # Use the correct MySQL password
     depends_on:
-      - db
+      db_mysql:
+        condition: service_healthy
 
-  frontend:
+  react_app:
     build:
-      context: ./frontend
-    container_name: frontend_container
+      context: ./frontend/app
+      dockerfile: Dockerfile
+    container_name: react_container
+    restart: always
     ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true  # For live reloading in Docker
+      - "3000:80"
+    env_file:
+      - ./frontend/app/.envprod
+    volumes:
+      - react_app:/var/www/html
     depends_on:
       - backend
 
-  db:
-    image: mysql:8
-    container_name: db_container
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydatabase
-      MYSQL_USER: username
-      MYSQL_PASSWORD: password
-    ports:
-      - "3306:3306"
+volumes:
+  react_app:
+  db_mysql:
