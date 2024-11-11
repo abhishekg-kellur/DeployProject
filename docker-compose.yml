@@ -39,14 +39,22 @@ services:
       dockerfile: Dockerfile
     container_name: react_container
     restart: always
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
     env_file:
       - ./frontend/app/.envprod
     volumes:
       - react_app:/var/www/html
     depends_on:
       - backend
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx_container
+    ports:
+      - "443:443"
+      - "80:80"
 
 volumes:
   react_app:
