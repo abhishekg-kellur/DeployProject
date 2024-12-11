@@ -14,6 +14,7 @@ engine = create_engine(DATABASE_URL)
 
 app = FastAPI()
 
+# ksdjgskg
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # React's development server origin
